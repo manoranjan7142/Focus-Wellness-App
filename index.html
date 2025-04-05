@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Focus & Wellness App</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      background: linear-gradient(135deg, #f0f4ff, #dbe9f4);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 20px;
+    }
+
+    .dark-theme {
+      background: #1e1e2f;
+      color: white;
+    }
+
+    .timer {
+      font-size: 3rem;
+      font-weight: bold;
+    }
+
+    .breathe-circle {
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background-color: #6c5ce7;
+      margin: 20px auto;
+      animation: breathe 8s ease-in-out infinite;
+    }
+
+    @keyframes breathe {
+      0% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.4);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    .mood-btn {
+      margin: 5px;
+    }
+  </style>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+
+<body>
+  <div class="container text-center">
+    <h1 class="mb-4">🧘‍♂️ Focus & Wellness App</h1>
+
+    <!-- Theme Switch -->
+    <button class="btn btn-secondary mb-4" onclick="toggleTheme()">🎨 Toggle Theme</button>
+
+    <!-- Google Login -->
+    <div id="g_id_onload"
+      data-client_id="937958669785-qcv0f7b5n2oqtbmi5iqg3n1gobrfoa43.apps.googleusercontent.com"
+      data-context="signin"
+      data-callback="handleCredentialResponse"
+      data-auto_prompt="false">
+    </div>
+    <div class="mb-4" id="googleSignIn">
+      <div class="g_id_signin"
+        data-type="standard"
+        data-size="large"
+        data-theme="outline"
+        data-text="sign_in_with"
+        data-shape="rectangular"
+        data-logo_alignment="left">
+      </div>
+    </div>
+    <div class="alert alert-success d-none" id="welcomeBox">Welcome, <span id="userName"></span>!</div>
+
+    <!-- Pomodoro Timer -->
+    <div class="card shadow p-4 mb-4">
+      <h3>⏱️ Pomodoro Timer</h3>
+      <div class="timer" id="timer">25:00</div>
+      <button class="btn btn-primary m-2" onclick="startTimer()">Start</button>
+      <button class="btn btn-danger m-2" onclick="resetTimer()">Reset</button>
+    </div>
+
+    <!-- Breathing Animation -->
+    <div class="card shadow p-4 mb-4">
+      <h3>🌬️ Guided Breathing</h3>
+      <div class="breathe-circle"></div>
+      <p>Breathe in... Breathe out...</p>
+    </div>
+
+    <!-- Mood Tracker -->
+    <div class="card shadow p-4 mb-4">
+      <h3>📊 Mood Tracker</h3>
+      <p>How are you feeling today?</p>
+      <div>
+        <button class="btn btn-outline-success mood-btn" onclick="saveMood('😊')">😊 Happy</button>
+        <button class="btn btn-outline-warning mood-btn" onclick="saveMood('😐')">😐 Okay</button>
+        <button class="btn btn-outline-danger mood-btn" onclick="saveMood('😔')">😔 Sad</button>
+      </div>
+      <div class="mt-3">
+        <h5>Recent Mood: <span id="recentMood">None</span></h5>
+      </div>
+      <canvas id="moodChart" width="400" height="200"></canvas>
+    </div>
+
+    <!-- Weekly Mood Calendar -->
+    <div class="card shadow p-4 mb-4">
+      <h3>📅 Weekly Mood Overview</h3>
+      <ul id="weeklyMood" class="list-group"></ul>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Notification Sound -->
+  <audio id="alarmSound" src="https://www.soundjay.com/button/beep-07.wav" preload="auto"></audio>
+
+  <!-- Custom JS -->
+  <script>
+    // Pomodoro Timer Logic with Break Notification
+    let timer;
+    let timeLeft = 25 * 60;
+
+    function startTimer() {
+      clearInterval(timer);
+      timer = setInterval(() => {
+        if (timeLeft <= 0) {
+          clearInterval(timer);
+          document.getElementById("alarmSound").play();
+          alert("⏳ Time's up! Take a 5-minute break.");
+          setTimeout(() => alert("Break's over! Back to work."), 5 * 60 * 1000);
+          timeLeft = 25 * 60;
+        } else {
+          timeLeft--;
+          updateTimerDisplay();
+        }
+      }, 1000);
+    }
+
+    function resetTimer() {
+      clearInterval(timer);
+      timeLeft = 25 * 60;
+      updateTimerDisplay();
+    }
+
+    function updateTimerDisplay() {
+      const minutes = Math.floor(timeLeft / 60);
+      const seconds = timeLeft % 60;
+      document.getElementById("timer").innerText = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+
+    // Mood Tracker Logic
+    const moodData = JSON.parse(localStorage.getItem("moodStats")) || { '😊': 0, '😐': 0, '😔': 0 };
+    const weekData = JSON.parse(localStorage.getItem("weeklyMoods")) || [];
+
+    function saveMood(mood) {
+      const date = new Date().toLocaleDateString();
+      localStorage.setItem("recentMood", mood);
+      document.getElementById("recentMood").innerText = mood;
+      moodData[mood]++;
+      localStorage.setItem("moodStats", JSON.stringify(moodData));
+      weekData.push({ date, mood });
+      if (weekData.length > 7) weekData.shift();
+      localStorage.setItem("weeklyMoods", JSON.stringify(weekData));
+      updateMoodChart();
+      updateWeekList();
+    }
+
+    // Mood Chart
+    let moodChart;
+    function updateMoodChart() {
+      const ctx = document.getElementById('moodChart').getContext('2d');
+      if (moodChart) moodChart.destroy();
+      moodChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['😊 Happy', '😐 Okay', '😔 Sad'],
+          datasets: [{
+            label: 'Mood Count',
+            data: [moodData['😊'], moodData['😐'], moodData['😔']],
+            backgroundColor: ['#28a745', '#ffc107', '#dc3545']
+          }]
+        }
+      });
+    }
+
+    // Weekly Mood List
+    function updateWeekList() {
+      const list = document.getElementById("weeklyMood");
+      list.innerHTML = "";
+      weekData.forEach(entry => {
+        const li = document.createElement("li");
+        li.className = "list-group-item";
+        li.innerText = `${entry.date}: ${entry.mood}`;
+        list.appendChild(li);
+      });
+    }
+
+    // Theme toggle
+    function toggleTheme() {
+      document.body.classList.toggle("dark-theme");
+    }
+
+    // Load on startup
+    window.onload = () => {
+      const mood = localStorage.getItem("recentMood");
+      if (mood) document.getElementById("recentMood").innerText = mood;
+      updateMoodChart();
+      updateWeekList();
+    }
+
+    // Google Sign-In with session storage
+    function handleCredentialResponse(response) {
+      const decoded = parseJwt(response.credential);
+      sessionStorage.setItem("userName", decoded.name);
+      document.getElementById("userName").innerText = decoded.name;
+      document.getElementById("welcomeBox").classList.remove("d-none");
+      document.getElementById("googleSignIn").classList.add("d-none");
+    }
+
+    function parseJwt(token) {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => '%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+      return JSON.parse(jsonPayload);
+    }
+
+    // Load session user
+    const sessionUser = sessionStorage.getItem("userName");
+    if (sessionUser) {
+      document.getElementById("userName").innerText = sessionUser;
+      document.getElementById("welcomeBox").classList.remove("d-none");
+      document.getElementById("googleSignIn").classList.add("d-none");
+    }
+  </script>
+</body>
+
+</html>
