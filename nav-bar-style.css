@@ -1,0 +1,60 @@
+body {
+    background: linear-gradient(135deg, #f0f4ff, #dbe9f4);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    padding-bottom: 80px;
+  }
+
+  .dark-theme {
+    background: #00ff88;
+    color: white;
+  }
+
+  .timer {
+    font-size: 3rem;
+    font-weight: bold;
+  }
+
+  .breathe-circle {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background-color: #6c5ce7;
+    margin: 20px auto;
+    animation: breathe 8s ease-in-out infinite;
+  }
+
+  @keyframes breathe {
+    0% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.4);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  .mood-btn {
+    margin: 5px;
+  }
+
+  /* footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background-color: #343a40;
+    color: white;
+    text-align: center;
+    padding: 10px 0;
+  }
+
+  footer a {
+    margin: 0 10px;
+    color: white;
+    text-decoration: none;
+  }
+
+  .navbar-nav .nav-link {
+    color: white !important;
+  } */
